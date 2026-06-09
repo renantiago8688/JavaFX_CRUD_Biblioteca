@@ -1,53 +1,57 @@
-package model.DAO;
+package com.template;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.dto.BibliotecaDTO;
-import model.dao.Conexao;
 
 public class BibliotecaDAO {
 
-    Connection c;
-    PreparedStatement ps;
-    ResultSet rs;
-
     // LISTAR
-    public void selecionarLivro() {
+    public ArrayList<BibliotecaDTO> listarLivro() {
         String sql = "SELECT id, nome, autor, genero, dificuldade FROM livro ORDER BY id";
 
+        ArrayList<BibliotecaDTO> lista = new ArrayList<>();
         try (
                 Connection conexao = Conexao.conectaDB();
                 PreparedStatement ps = conexao.prepareStatement(sql);
-                ResultSet resultado = ps.executeQuery() //armazena os dados que o banco de dados devolveu após processar o comando
+                ResultSet resultado = ps.executeQuery()
         ) {
-            boolean encontrouLivro = false;
+            while (resultado.next()) {
+                BibliotecaDTO livro = new BibliotecaDTO();
 
-            while (resultado.next())//.next serve para mostrar a linha depois do resultado
-            {
-                encontrouLivro = true;
+                livro.setId(resultado.getInt("id"));
+                livro.setNome(resultado.getString("nome"));
+                livro.setAutor(resultado.getString("autor"));
+                livro.setGenero(resultado.getString("genero"));
+                livro.setDificuldade(resultado.getInt("dificuldade"));
+
                 System.out.println("ID: " + resultado.getInt("id"));
                 System.out.println("Nome: " + resultado.getString("nome"));
                 System.out.println("Autor: " + resultado.getString("autor"));
                 System.out.println("Genero: " + resultado.getString("genero"));
                 System.out.println("Dificuldade: " + resultado.getInt("dificuldade"));
                 System.out.println();
+
+                lista.add(livro);
             }
 
-            if (!encontrouLivro) {
-                System.out.println("Nenhum livro cadastrado."); //Uma variável de controle para avisar caso a tabela esteja vazia.
+            if (lista.isEmpty()) {
+                System.out.println("Nenhum livro cadastrado.");
             }
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
         }
+
+        return lista;
     }
 
     // INSERT
-    public void cadastrarLivro(BibliotecaDTO livro) {
-        String sql = "INSERT INTO livro (nome, autor, genero, dificuldade) VALUES (?, ?, ?, ?)"; //placeholders
+    public void salvarLivro(BibliotecaDTO livro) {
+    String sql = "INSERT INTO livro (nome, autor, genero, dificuldade) VALUES (?, ?, ?, ?)";
 
         try (
                 Connection conexao = Conexao.conectaDB();
@@ -85,14 +89,14 @@ public class BibliotecaDAO {
     }
 
     // DELETE
-    public void deletarLivro(int id) {
+    public void deletarLivro(BibliotecaDTO objBibliotecaDTO) {
         String sql = "DELETE FROM livro WHERE id = ?";
 
         try (
                 Connection conexao = Conexao.conectaDB();
                 PreparedStatement ps = conexao.prepareStatement(sql)
         ) {
-            ps.setInt(1, id);
+            ps.setInt(1, objBibliotecaDTO.getId());
             ps.executeUpdate();
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
