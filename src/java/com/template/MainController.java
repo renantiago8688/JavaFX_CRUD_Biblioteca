@@ -1,13 +1,15 @@
 package com.template;
 
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent; // CORRIGIDO: Import correto do JavaFX (antes estava java.awt.event.ActionEvent)
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.Alert.AlertType;
 
 import java.util.ArrayList;
 
@@ -23,6 +25,8 @@ public class MainController {
     @FXML private TextField txtGenero;
     @FXML private TextField txtDificuldade;
 
+    @FXML private Label lblContador;
+
     @FXML private TableView<BibliotecaDTO> tblLivro;
     @FXML private TableColumn<BibliotecaDTO, Integer> colId;
     @FXML private TableColumn<BibliotecaDTO, String> colNome;
@@ -35,6 +39,11 @@ public class MainController {
         BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
         ArrayList<BibliotecaDTO> listaBiblioteca = objBibliotecaDAO.listarLivro();
         tblLivro.setItems(FXCollections.observableArrayList(listaBiblioteca));
+
+        int totalRegistros = listaBiblioteca.size();
+        if (lblContador != null) {
+            lblContador.setText("Total de livros cadastrados: " + totalRegistros);
+        }
     }
 
     private void limparCampos() {
@@ -45,28 +54,50 @@ public class MainController {
         tblLivro.getSelectionModel().clearSelection();
     }
 
+    private void mostrarAlerta(String titulo, String cabecalho, String mensagem, AlertType tipo) {
+        javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(tipo);
+        alerta.setTitle(titulo);
+        alerta.setHeaderText(cabecalho);
+        alerta.setContentText(mensagem);
+        alerta.showAndWait();
+    }
+
     @FXML
     private void btnSalvarAction(ActionEvent event) {
-        try {
-            String nome = txtNome.getText();
-            String autor = txtAutor.getText();
-            String genero = txtGenero.getText();
-            int difficulty = Integer.parseInt(txtDificuldade.getText());
+        // 1. Barreira de Segurança: Verifica campos vazios
+        if (txtNome.getText().trim().isEmpty() ||
+                txtAutor.getText().trim().isEmpty() ||
+                txtGenero.getText().trim().isEmpty() ||
+                txtDificuldade.getText().trim().isEmpty()) {
 
-            BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
-            objBibliotecaDTO.setNome(nome);
-            objBibliotecaDTO.setAutor(autor);
-            objBibliotecaDTO.setGenero(genero);
-            objBibliotecaDTO.setDificuldade(difficulty);
-
-            BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
-            objBibliotecaDAO.salvarLivro(objBibliotecaDTO);
-
-            carregarBiblioteca();
-            limparCampos();
-        } catch (NumberFormatException e) {
-            System.err.println("Erro: A dificuldade deve ser um número inteiro válido.");
+            mostrarAlerta("Campos Incompletos", "Não foi possível salvar",
+                    "Todos os campos (Nome, Autor, Gênero e Dificuldade) devem ser preenchidos.",
+                    AlertType.WARNING);
+            return;
         }
+
+        int difficulty;
+        try {
+            difficulty = Integer.parseInt(txtDificuldade.getText().trim());
+        } catch (NumberFormatException e) {
+            mostrarAlerta("Erro de Digitação", "Valor Inválido",
+                    "A dificuldade deve ser um número inteiro válido.", AlertType.ERROR);
+            return;
+        }
+
+        BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
+        objBibliotecaDTO.setNome(txtNome.getText());
+        objBibliotecaDTO.setAutor(txtAutor.getText());
+        objBibliotecaDTO.setGenero(txtGenero.getText());
+        objBibliotecaDTO.setDificuldade(difficulty);
+
+        BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
+        objBibliotecaDAO.salvarLivro(objBibliotecaDTO);
+
+        carregarBiblioteca();
+        limparCampos();
+
+        mostrarAlerta("Sucesso", null, "Livro salvo com sucesso!", AlertType.INFORMATION);
     }
 
     @FXML
@@ -74,7 +105,19 @@ public class MainController {
         BibliotecaDTO livroSelecionado = tblLivro.getSelectionModel().getSelectedItem();
 
         if (livroSelecionado == null) {
-            System.out.println("Selecione um livro na tabela para alterar.");
+            mostrarAlerta("Aviso", "Ação Necessária",
+                    "Por favor, selecione um livro na tabela para poder alterar.", AlertType.WARNING);
+            return;
+        }
+
+        if (txtNome.getText().trim().isEmpty() ||
+                txtAutor.getText().trim().isEmpty() ||
+                txtGenero.getText().trim().isEmpty() ||
+                txtDificuldade.getText().trim().isEmpty()) {
+
+            mostrarAlerta("Campos Incompletos", "Não foi possível alterar",
+                    "Não deixe os campos em branco para realizar a alteração.",
+                    AlertType.WARNING);
             return;
         }
 
@@ -82,7 +125,7 @@ public class MainController {
             String nome = txtNome.getText();
             String autor = txtAutor.getText();
             String genero = txtGenero.getText();
-            int dificuldade = Integer.parseInt(txtDificuldade.getText());
+            int dificuldade = Integer.parseInt(txtDificuldade.getText().trim());
 
             BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
             objBibliotecaDTO.setId(livroSelecionado.getId());
@@ -96,8 +139,12 @@ public class MainController {
 
             carregarBiblioteca();
             limparCampos();
+
+            mostrarAlerta("Sucesso", null, "Livro atualizado com sucesso!", AlertType.INFORMATION);
+
         } catch (NumberFormatException e) {
-            System.err.println("Erro: A dificuldade deve ser um número inteiro válido.");
+            mostrarAlerta("Erro de Digitação", "Valor Inválido",
+                    "A dificuldade deve ser um número inteiro válido.", AlertType.ERROR);
         }
     }
 
@@ -106,23 +153,24 @@ public class MainController {
         BibliotecaDTO livroSelecionado = tblLivro.getSelectionModel().getSelectedItem();
 
         if (livroSelecionado == null) {
-            System.out.println("Selecione um livro na tabela para deletar.");
+            mostrarAlerta("Aviso", "Ação Necessária",
+                    "Por favor, selecione um livro na tabela para deletar.", AlertType.WARNING);
             return;
         }
-
-        //BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
-        //objBibliotecaDTO.setId(livroSelecionado.getId());
 
         BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
         objBibliotecaDAO.deletarLivro(livroSelecionado);
 
         carregarBiblioteca();
         limparCampos();
+
+        mostrarAlerta("Sucesso", null, "Livro excluído com sucesso!", AlertType.INFORMATION);
     }
 
     @FXML
     private void btnLimparAction(ActionEvent event) {
-        limparCampos(); // Apenas limpa a tela, sem mexer no banco!
+        limparCampos();
+        mostrarAlerta("Campos Limpos", null, "Os campos de texto foram resetados.", AlertType.INFORMATION);
     }
 
     @FXML
@@ -136,6 +184,11 @@ public class MainController {
         tblLivro.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             carregarCampos();
         });
+
+        txtNome.setOnAction(event -> txtAutor.requestFocus());
+        txtAutor.setOnAction(event -> txtGenero.requestFocus());
+        txtGenero.setOnAction(event -> txtDificuldade.requestFocus());
+        txtDificuldade.setOnAction(event -> btnSalvarAction(null));
 
         carregarBiblioteca();
     }
