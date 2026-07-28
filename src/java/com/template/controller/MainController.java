@@ -1,5 +1,8 @@
-package com.template;
+package com.template.controller;
+import static com.template.util.DialogUtil.*; //alert
 
+import com.template.model.dao.BibliotecaDAO;
+import com.template.model.dto.BibliotecaDTO;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -52,14 +55,6 @@ public class MainController {
         txtGenero.setText("");
         txtDificuldade.setText("");
         tblLivro.getSelectionModel().clearSelection();
-    }
-
-    private void mostrarAlerta(String titulo, String cabecalho, String mensagem, AlertType tipo) {
-        javafx.scene.control.Alert alerta = new javafx.scene.control.Alert(tipo);
-        alerta.setTitle(titulo);
-        alerta.setHeaderText(cabecalho);
-        alerta.setContentText(mensagem);
-        alerta.showAndWait();
     }
 
     @FXML
