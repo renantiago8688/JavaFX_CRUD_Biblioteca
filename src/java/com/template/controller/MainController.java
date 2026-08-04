@@ -1,8 +1,10 @@
 package com.template.controller;
-import static com.template.util.DialogUtil.*; //alert
+
+import static com.template.util.DialogUtil.*;
 
 import com.template.model.dao.BibliotecaDAO;
 import com.template.model.dto.BibliotecaDTO;
+import com.template.validator.BibliotecaValidador;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -37,6 +39,9 @@ public class MainController {
     @FXML private TableColumn<BibliotecaDTO, String> colGenero;
     @FXML private TableColumn<BibliotecaDTO, Integer> colDificuldade;
 
+    // Instância do Validador
+    private final BibliotecaValidador validador = new BibliotecaValidador();
+
     @FXML
     private void carregarBiblioteca() {
         BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
@@ -59,31 +64,22 @@ public class MainController {
 
     @FXML
     private void btnSalvarAction(ActionEvent event) {
-        // 1. Barreira de Segurança: Verifica campos vazios
-        if (txtNome.getText().trim().isEmpty() ||
-                txtAutor.getText().trim().isEmpty() ||
-                txtGenero.getText().trim().isEmpty() ||
-                txtDificuldade.getText().trim().isEmpty()) {
+        String nome = txtNome.getText();
+        String autor = txtAutor.getText();
+        String genero = txtGenero.getText();
+        String dificuldadeStr = txtDificuldade.getText();
 
-            mostrarAlerta("Campos Incompletos", "Não foi possível salvar",
-                    "Todos os campos (Nome, Autor, Gênero e Dificuldade) devem ser preenchidos.",
-                    AlertType.WARNING);
+        // Passa a responsabilidade de validação para a classe validadora
+        if (!validador.validarCamposLivro(nome, autor, genero, dificuldadeStr)) {
             return;
         }
 
-        int difficulty;
-        try {
-            difficulty = Integer.parseInt(txtDificuldade.getText().trim());
-        } catch (NumberFormatException e) {
-            mostrarAlerta("Erro de Digitação", "Valor Inválido",
-                    "A dificuldade deve ser um número inteiro válido.", AlertType.ERROR);
-            return;
-        }
+        int difficulty = Integer.parseInt(dificuldadeStr.trim());
 
         BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
-        objBibliotecaDTO.setNome(txtNome.getText());
-        objBibliotecaDTO.setAutor(txtAutor.getText());
-        objBibliotecaDTO.setGenero(txtGenero.getText());
+        objBibliotecaDTO.setNome(nome);
+        objBibliotecaDTO.setAutor(autor);
+        objBibliotecaDTO.setGenero(genero);
         objBibliotecaDTO.setDificuldade(difficulty);
 
         BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
@@ -105,42 +101,32 @@ public class MainController {
             return;
         }
 
-        if (txtNome.getText().trim().isEmpty() ||
-                txtAutor.getText().trim().isEmpty() ||
-                txtGenero.getText().trim().isEmpty() ||
-                txtDificuldade.getText().trim().isEmpty()) {
+        String nome = txtNome.getText();
+        String autor = txtAutor.getText();
+        String genero = txtGenero.getText();
+        String dificuldadeStr = txtDificuldade.getText();
 
-            mostrarAlerta("Campos Incompletos", "Não foi possível alterar",
-                    "Não deixe os campos em branco para realizar a alteração.",
-                    AlertType.WARNING);
+        // Reutiliza a mesma validação
+        if (!validador.validarCamposLivro(nome, autor, genero, dificuldadeStr)) {
             return;
         }
 
-        try {
-            String nome = txtNome.getText();
-            String autor = txtAutor.getText();
-            String genero = txtGenero.getText();
-            int dificuldade = Integer.parseInt(txtDificuldade.getText().trim());
+        int dificuldade = Integer.parseInt(dificuldadeStr.trim());
 
-            BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
-            objBibliotecaDTO.setId(livroSelecionado.getId());
-            objBibliotecaDTO.setNome(nome);
-            objBibliotecaDTO.setAutor(autor);
-            objBibliotecaDTO.setGenero(genero);
-            objBibliotecaDTO.setDificuldade(dificuldade);
+        BibliotecaDTO objBibliotecaDTO = new BibliotecaDTO();
+        objBibliotecaDTO.setId(livroSelecionado.getId());
+        objBibliotecaDTO.setNome(nome);
+        objBibliotecaDTO.setAutor(autor);
+        objBibliotecaDTO.setGenero(genero);
+        objBibliotecaDTO.setDificuldade(dificuldade);
 
-            BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
-            objBibliotecaDAO.alterarLivro(objBibliotecaDTO);
+        BibliotecaDAO objBibliotecaDAO = new BibliotecaDAO();
+        objBibliotecaDAO.alterarLivro(objBibliotecaDTO);
 
-            carregarBiblioteca();
-            limparCampos();
+        carregarBiblioteca();
+        limparCampos();
 
-            mostrarAlerta("Sucesso", null, "Livro atualizado com sucesso!", AlertType.INFORMATION);
-
-        } catch (NumberFormatException e) {
-            mostrarAlerta("Erro de Digitação", "Valor Inválido",
-                    "A dificuldade deve ser um número inteiro válido.", AlertType.ERROR);
-        }
+        mostrarAlerta("Sucesso", null, "Livro atualizado com sucesso!", AlertType.INFORMATION);
     }
 
     @FXML
@@ -148,7 +134,9 @@ public class MainController {
         BibliotecaDTO livroSelecionado = tblLivro.getSelectionModel().getSelectedItem();
 
         if (livroSelecionado == null) {
-            mostrarAlerta("Aviso", "Ação Necessária",
+            mostrarAlerta(
+                    "Aviso",
+                    "Ação Necessária",
                     "Por favor, selecione um livro na tabela para deletar.", AlertType.WARNING);
             return;
         }
@@ -159,13 +147,19 @@ public class MainController {
         carregarBiblioteca();
         limparCampos();
 
-        mostrarAlerta("Sucesso", null, "Livro excluído com sucesso!", AlertType.INFORMATION);
+        mostrarAlerta(
+                "Sucesso",
+                null,
+                "Livro excluído com sucesso!", AlertType.INFORMATION);
     }
 
     @FXML
     private void btnLimparAction(ActionEvent event) {
         limparCampos();
-        mostrarAlerta("Campos Limpos", null, "Os campos de texto foram resetados.", AlertType.INFORMATION);
+        mostrarAlerta(
+                "Campos Limpos",
+                null,
+                "Os campos de texto foram resetados.", AlertType.INFORMATION);
     }
 
     @FXML

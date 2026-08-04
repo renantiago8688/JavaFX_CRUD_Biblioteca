@@ -2,6 +2,7 @@ package com.template.model.dao;
 
 import com.template.model.dto.BibliotecaDTO;
 import com.template.model.Conexao;
+import javafx.scene.control.Alert;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,6 +11,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static com.template.util.DialogUtil.mostrarAlerta;
 
 public class BibliotecaDAO {
 
@@ -47,6 +50,11 @@ public class BibliotecaDAO {
             }
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
+            mostrarAlerta(
+                    "Erro no Banco de Dados",
+                    "Falha ao Listar Livros",
+                    "Não foi possível salvar as alterações no banco de dados. Detalhes: " + excecao.getMessage(),
+                    Alert.AlertType.ERROR);
         }
 
         return lista;
@@ -68,6 +76,11 @@ public class BibliotecaDAO {
             ps.executeUpdate();
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
+            mostrarAlerta(
+                    "Erro no Banco de Dados",
+                    "Falha ao Salvar Livro",
+                    "Não foi possível salvar as alterações no banco de dados. Detalhes: " + excecao.getMessage(),
+                    Alert.AlertType.ERROR);
         }
     }
 
@@ -88,6 +101,11 @@ public class BibliotecaDAO {
             ps.executeUpdate();
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
+            mostrarAlerta(
+                    "Erro no Banco de Dados",
+                    "Falha ao Alterar Livro",
+                    "Não foi possível salvar as alterações no banco de dados. Detalhes: " + excecao.getMessage(),
+                    Alert.AlertType.ERROR);
         }
     }
 
@@ -103,6 +121,11 @@ public class BibliotecaDAO {
             ps.executeUpdate();
         } catch (SQLException excecao) {
             Logger.getLogger(BibliotecaDAO.class.getName()).log(Level.SEVERE, null, excecao);
+            mostrarAlerta(
+                    "Erro no Banco de Dados",
+                    "Falha ao Deletar Livro",
+                    "Não foi possível salvar as alterações no banco de dados. Detalhes: " + excecao.getMessage(),
+                    Alert.AlertType.ERROR);
         }
     }
 }
