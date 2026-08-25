@@ -2,46 +2,32 @@ package com.template.validator;
 
 import javafx.scene.control.Alert.AlertType;
 import static com.template.util.DialogUtil.mostrarAlerta;
+import java.util.List;
 
 public class BibliotecaValidador {
 
     public boolean validarCamposLivro(String nome, String autor, String genero, String dificuldade) {
 
-        // 1. Barreira de Segurança: Checa nulos e campos vazios
-        if (isVazio(nome) || isVazio(autor) || isVazio(genero) || isVazio(dificuldade)) {
-            mostrarAlerta(
-                    "Campos Incompletos",
-                    "Não foi possível processar",
-                    "Todos os campos (Nome, Autor, Gênero e Dificuldade) devem ser preenchidos.",
-                    AlertType.WARNING
-            );
-            return false;
-        }
+        List<Validador<String>> validadores = List.of(
+                new CampoObrigatorioValidador("Nome", nome),
+                new CampoObrigatorioValidador("Autor", autor),
+                new CampoObrigatorioValidador("Gênero", genero),
+                new CampoObrigatorioValidador("Dificuldade", dificuldade),
+                new DificuldadeValidador(dificuldade)
+        );
 
-        // 2. Validação e conversão do número de dificuldade
-        if (!validarDificuldade(dificuldade)) {
-            return false;
+        for (Validador<String> validador : validadores) {
+            if (!validador.validar(validador.getValor())) {
+                mostrarAlerta(
+                        "Erro de Validação",
+                        "Não foi possível processar",
+                        validador.getMensagemErro(),
+                        AlertType.WARNING
+                );
+                return false;
+            }
         }
 
         return true;
-    }
-
-    public boolean validarDificuldade(String dificuldade) {
-        try {
-            Integer.parseInt(dificuldade.trim());
-            return true;
-        } catch (NumberFormatException e) {
-            mostrarAlerta(
-                    "Erro de Digitação",
-                    "Valor Inválido",
-                    "A dificuldade deve ser um número inteiro válido.",
-                    AlertType.ERROR
-            );
-            return false;
-        }
-    }
-
-    private boolean isVazio(String texto) {
-        return texto == null || texto.trim().isEmpty();
     }
 }
